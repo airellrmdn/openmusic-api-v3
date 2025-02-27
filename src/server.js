@@ -5,23 +5,32 @@ const Jwt = require('@hapi/jwt');
 const albums = require('./api/albums');
 const AlbumsService = require('./services/AlbumsService');
 const AlbumsValidator = require('./validator/albums');
+
 const songs = require('./api/songs');
 const SongsService = require('./services/SongsService');
 const SongsValidator = require('./validator/songs');
+
 const users = require('./api/users');
 const UsersService = require('./services/UsersService');
 const UsersValidator = require('./validator/users');
+
 const authentications = require('./api/authentications');
 const AuthenticationsService = require('./services/AuthenticationsService');
 const AuthenticationsValidator = require('./validator/authentications');
+
 const playlists = require('./api/playlists/');
 const PlaylistsService = require('./services/PlaylistsService');
 const PlaylistsValidator = require('./validator/playlists');
+
 const collaborations = require('./api/collaborations');
 const CollaborationsService = require('./services/CollaborationsService');
 const CollaborationsValidator = require('./validator/collaborations');
-const TokenManager = require('./tokenize/TokenManager');
 
+const _exports = require('./api/exports/');
+const ProducerService = require('./services/broker/ProducerService');
+const ExportsValidator = require('./validator/exports');
+
+const TokenManager = require('./tokenize/TokenManager');
 const ClientError = require('./exception/ClientError');
 
 const init = async () => {
@@ -110,6 +119,14 @@ const init = async () => {
         playlistsService,
         usersService,
         validator: CollaborationsValidator,
+      },
+    },
+    {
+      plugin: _exports,
+      options: {
+        producerService: ProducerService,
+        playlistsService,
+        validator: ExportsValidator,
       },
     },
   ]);
