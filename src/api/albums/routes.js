@@ -17,6 +17,11 @@ const routes = (handler) => [
     handler: (request) => handler.putAlbumByIdHandler(request),
   },
   {
+    method: 'DELETE',
+    path: '/albums/{id}',
+    handler: (request) => handler.deleteAlbumByIdHandler(request),
+  },
+  {
     method: 'POST',
     path: '/albums/{id}/covers',
     handler: (request, h) => handler.postUploadAlbumCoverHandler(request, h),
@@ -39,9 +44,25 @@ const routes = (handler) => [
     },
   },
   {
+    method: 'POST',
+    path: '/albums/{id}/likes',
+    handler: (request, h) => handler.postAlbumLikeByIdHandler(request, h),
+    options: {
+      auth: 'openmusic_jwt',
+    }
+  },
+  {
     method: 'DELETE',
-    path: '/albums/{id}',
-    handler: (request) => handler.deleteAlbumByIdHandler(request),
+    path: '/albums/{id}/likes',
+    handler: (request) => handler.deleteAlbumLikeByIdHandler(request),
+    options: {
+      auth: 'openmusic_jwt',
+    }
+  },
+  {
+    method: 'GET',
+    path: '/albums/{id}/likes',
+    handler: (request, h) => handler.getAlbumLikesByIdHandler(request, h),
   },
 ];
 
