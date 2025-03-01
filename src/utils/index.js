@@ -17,10 +17,11 @@ const mapSongsDBToModel = ({
   albumId: album_id,
 });
 
-const mapAlbumSongDB = ({ id, name, year }, songs = []) => ({
+const mapAlbumSongDB = ({ id, name, year, cover }, songs = []) => ({
   id,
   name,
   year,
+  coverUrl: cover,
   songs,
 });
 
