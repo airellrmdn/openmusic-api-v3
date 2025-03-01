@@ -6,9 +6,10 @@ const AuthorizationError = require('../exception/AuthorizationError');
 const { mapPlaylistSongDB } = require('../utils');
 
 class PlaylistsService {
-  constructor(collaborationService) {
+  constructor(collaborationService, cacheService) {
     this._pool = new Pool();
     this._collaborationService = collaborationService;
+    this._cacheService = cacheService;
   }
 
   async addPlaylist({ name, owner }) {
@@ -25,27 +26,39 @@ class PlaylistsService {
       throw new InvariantError('An error occured while create playlist');
     }
 
+    await this._cacheService.delete(`playlists:${owner}`);
+
     return result.rows[0].id;
   }
 
+  // Implement server-side cache for get playlists
   async getPlaylists(owner) {
-    const query = {
-      text: `SELECT playlists.id, playlists.name, users.username FROM playlists
-      LEFT JOIN users ON users.id = playlists.owner
-      LEFT JOIN collaborations ON collaborations.playlist_id = playlists.id
-      WHERE playlists.owner = $1 OR collaborations.user_id = $1
-      GROUP BY playlists.id, users.username`,
-      values: [owner],
-    };
+    try {
+      const headerValue = 'cache';
+      const result = await this._cacheService.get(`playlists:${owner}`);
+      return { playlists: JSON.parse(result), headerValue };
+    } catch {
+      const headerValue = 'server';
+      const query = {
+        text: `SELECT playlists.id, playlists.name, users.username FROM playlists
+        LEFT JOIN users ON users.id = playlists.owner
+        LEFT JOIN collaborations ON collaborations.playlist_id = playlists.id
+        WHERE playlists.owner = $1 OR collaborations.user_id = $1
+        GROUP BY playlists.id, users.username`,
+        values: [owner],
+      };
 
-    const result = await this._pool.query(query);
+      const result = await this._pool.query(query);
 
-    return result.rows;
+      await this._cacheService.set(`playlists:${owner}`, JSON.stringify(result.rows));
+
+      return { playlists: result.rows, headerValue };
+    }
   }
 
   async deletePlaylistById(id) {
     const query = {
-      text: 'DELETE FROM playlists WHERE id = $1 RETURNING id',
+      text: 'DELETE FROM playlists WHERE id = $1 RETURNING id, owner',
       values: [id],
     };
 
@@ -54,6 +67,9 @@ class PlaylistsService {
     if (!result.rows.length) {
       throw new NotFoundError('Playlist not found');
     }
+
+    const { owner } = result.rows[0];
+    await this._cacheService.delete(`playlists:${owner}`);
   }
 
   async addPlaylistSongById(playlistId, songId, userId) {

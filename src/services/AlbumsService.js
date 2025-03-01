@@ -103,7 +103,6 @@ class AlbumsService {
     }
 
     await this._cacheService.delete(`albumLikes:${albumId}`);
-    return result.rows[0].id;
   }
 
   async deleteAlbumLikeById(credentialId, albumId) {
